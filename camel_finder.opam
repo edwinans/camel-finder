@@ -12,6 +12,7 @@ depends: [
   "ocaml"
   "dune" {>= "3.11"}
   "vdom"
+  "js_of_ocaml"
   "odoc" {with-doc}
 ]
 build: [

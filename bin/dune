@@ -1,4 +1,11 @@
 (executable
- (public_name camel_finder)
+ ; (public_name camel_finder)
  (name main)
- (libraries camel_finder))
+ (libraries vdom)
+ (modes js))
+
+(rule (copy main.bc.js main.js))
+
+(alias
+ (name default)
+ (deps main.js index.html))

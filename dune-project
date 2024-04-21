@@ -15,8 +15,9 @@
 
 (package
  (name camel_finder)
+ (allow_empty)
  (synopsis "Minesweeper-like game running on Web")
  (description "Implementation of Minesweeper (with camels) in ocaml-vdom")
- (depends ocaml dune vdom)
+ (depends ocaml dune vdom js_of_ocaml)
  (tags
   ("game" "web" "vdom")))
