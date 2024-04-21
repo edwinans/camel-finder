@@ -26,11 +26,24 @@ let init: model =
 let update model = function
   | Clicked (i, j) -> Printf.printf "(%d, %d)\n" i j; model
 
-let view _model =
-  Vdom.div [
-    Vdom.elt "button" ~a:[Vdom.type_button; Vdom.onclick (fun _ -> Clicked (0,0))]
-      [Vdom.text "x"];
-  ]
+let button (i, j) =
+  Vdom.elt "button" ~a:[Vdom.type_button; Vdom.onclick (fun _ -> Clicked (i, j))]
+    [Vdom.text "x"]
+
+let view {grid; _} =
+  let buttons =
+    Array.mapi (fun i row ->
+        Vdom.div (
+          Array.mapi (fun j cell ->
+              button (i, j)
+            ) row
+          |> Array.to_list
+        )
+      ) grid
+    |> Array.to_list
+  in
+  Vdom.div
+    buttons
 
 let _ =
   let app = Vdom.simple_app ~init ~update ~view () in
