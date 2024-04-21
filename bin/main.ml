@@ -27,8 +27,15 @@ let update model = function
   | Clicked (i, j) -> Printf.printf "(%d, %d)\n" i j; model
 
 let button (i, j) =
-  Vdom.elt "button" ~a:[Vdom.type_button; Vdom.onclick (fun _ -> Clicked (i, j))]
-    [Vdom.text "x"]
+  Vdom.elt "button"
+    ~a:[
+      Vdom.type_button;
+      Vdom.onclick (fun _ -> Clicked (i, j));
+      Vdom.style "margin" "1.5px";
+      Vdom.style "width" "40px";
+      Vdom.style "height" "40px";
+    ]
+    []
 
 let view {grid; _} =
   let buttons =
