@@ -15,7 +15,7 @@ type model = {
 type msg =
   | Clicked of int * int
   | Calculate of int * int
-  | Generate
+  | Generate of int * int
   | Game_over
 
 let init =
@@ -40,12 +40,14 @@ let print_grid grid =
 
 let print_list = List.iter (fun x -> Printf.printf "%d " x)
 
-let generate grid camels size =
+let camel_string = "🐪"
+
+let generate grid camels size first =
   let n = size * size in
   Random.self_init ();
   let dummy_sort = List.fast_sort (fun _ _ -> -1 + Random.int 3) in
   let camels_positions =
-    Seq.ints 0 |> Seq.take n |> List.of_seq
+    Seq.ints 0 |> Seq.take n |> Seq.filter ((!=) first) |> List.of_seq
     |> dummy_sort |> dummy_sort
     |> List.to_seq |> Seq.take camels |> List.of_seq
   in
@@ -60,18 +62,19 @@ let update ({camels; size; grid; revealed; generated;} as model) = function
   | Clicked (i, j) ->
     Printf.printf "(%d, %d)\n" i j;
     revealed.(i).(j) <- true;
+    let c = [Vdom.Cmd.echo (Calculate (i, j))] in
     if not generated then
-      Vdom.return ~c:[Vdom.Cmd.echo Generate] model
+      Vdom.return ~c:[Vdom.Cmd.batch (Vdom.Cmd.echo (Generate (i, j)) :: c)] model
     else
-      Vdom.return ~c:[Vdom.Cmd.echo (Calculate (i, j))] model
+      Vdom.return ~c model
   | Calculate (i, j) ->
     if grid.(i).(j) = Camel then
       Vdom.return ~c:[Vdom.Cmd.echo Game_over] model
     else
       Vdom.return model
-  | Generate ->
+  | Generate (i, j) ->
     print_endline "Generating the grid!";
-    generate grid camels size;
+    generate grid camels size (i * size + j);
     print_grid grid;
     Vdom.return {model with generated = true}
   | Game_over ->
@@ -79,18 +82,23 @@ let update ({camels; size; grid; revealed; generated;} as model) = function
     Vdom.return model
 
 let is_revealed model (i, j) = model.revealed.(i).(j)
+let is_camel model (i, j) = model.grid.(i).(j) = Camel
 
-let button ~revealed (i, j) =
+let button ~revealed ~camel (i, j) =
+  let s = Vdom.style in
   Vdom.elt "button"
     ~a:[
       Vdom.type_button;
       Vdom.onclick (fun _ -> Clicked (i, j));
-      Vdom.style "margin" "1.5px";
-      Vdom.style "width" "40px";
-      Vdom.style "height" "40px";
+      s"margin" "1.5px";
+      s"width" "40px";
+      s"height" "40px";
+      s"min-height" "40px";
+      s"min-width" "40px";
       Vdom.disabled revealed;
     ]
-    []
+    [Vdom.text (if revealed && camel then camel_string else "O")]
+
 
 let view ({grid; _} as model) =
   let buttons =
@@ -98,7 +106,7 @@ let view ({grid; _} as model) =
         Vdom.div (
           Array.mapi (fun j cell ->
               let revealed = is_revealed model (i, j) in
-              button ~revealed (i, j)
+              button ~revealed ~camel:(is_camel model (i,j)) (i, j)
             ) row
           |> Array.to_list
         )
