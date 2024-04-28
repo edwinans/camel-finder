@@ -2,7 +2,7 @@
 
 type cell =
   | Camel
-  | Empty
+  | Empty of int
 
 type model = {
   size: int;
@@ -20,7 +20,7 @@ type msg =
 
 let init =
   let size = 8 in
-  let grid = Array.init size (fun _ -> Array.make size Empty) in
+  let grid = Array.init size (fun _ -> Array.make size (Empty 0)) in
   let revealed = Array.init size (fun _ -> Array.make size false) in
   Vdom.return
     {
@@ -41,13 +41,15 @@ let print_grid grid =
 let print_list = List.iter (fun x -> Printf.printf "%d " x)
 
 let camel_string = "🐪"
+let is_revealed model (i, j) = model.revealed.(i).(j)
+let is_camel model (i, j) = model.grid.(i).(j) = Camel
 
 let generate grid camels size first =
   let n = size * size in
   Random.self_init ();
   let dummy_sort = List.fast_sort (fun _ _ -> -1 + Random.int 3) in
   let camels_positions =
-    Seq.ints 0 |> Seq.take n |> Seq.filter ((!=) first) |> List.of_seq
+    Seq.ints 0 |> Seq.take n |> Seq.filter ((<>) first) |> List.of_seq
     |> dummy_sort |> dummy_sort
     |> List.to_seq |> Seq.take camels |> List.of_seq
   in
@@ -57,6 +59,28 @@ let generate grid camels size first =
       grid.(i).(j) <- Camel
     )
     camels_positions
+
+let rec calculate grid size (i, j) =
+  if grid.(i).(j) <> Camel then begin
+    Printf.printf "calculate (%d, %d)\n" i j;
+    let nb = ref 0 in
+    let nb_camels i j =
+      if i >= 0 && i < size && j >= 0 && j < size && grid.(i).(j) = Camel then
+        incr nb
+    in
+    nb_camels (i-1) (j-1);
+    nb_camels (i-1) (j);
+    nb_camels (i-1) (j+1);
+    nb_camels (i) (j-1);
+    nb_camels (i) (j+1);
+    nb_camels (i+1) (j-1);
+    nb_camels (i+1) (j);
+    nb_camels (i+1) (j+1);
+    if !nb = 0 then
+      ()
+    else
+      grid.(i).(j) <- Empty !nb
+  end
 
 let update ({camels; size; grid; revealed; generated;} as model) = function
   | Clicked (i, j) ->
@@ -68,10 +92,12 @@ let update ({camels; size; grid; revealed; generated;} as model) = function
     else
       Vdom.return ~c model
   | Calculate (i, j) ->
-    if grid.(i).(j) = Camel then
+    if is_camel model (i, j) then
       Vdom.return ~c:[Vdom.Cmd.echo Game_over] model
-    else
+    else begin
+      calculate grid size (i, j);
       Vdom.return model
+    end
   | Generate (i, j) ->
     print_endline "Generating the grid!";
     generate grid camels size (i * size + j);
@@ -81,11 +107,17 @@ let update ({camels; size; grid; revealed; generated;} as model) = function
     Js_browser.Window.alert Js_browser.window "Game Over!";
     Vdom.return model
 
-let is_revealed model (i, j) = model.revealed.(i).(j)
-let is_camel model (i, j) = model.grid.(i).(j) = Camel
 
-let button ~revealed ~camel (i, j) =
+
+let button model (i, j) =
   let s = Vdom.style in
+  let revealed = is_revealed model (i, j) in
+  let txt =
+    match model.grid.(i).(j) with
+    | Camel when revealed -> camel_string
+    | Empty nb when revealed -> string_of_int nb
+    | _ -> "O"
+  in
   Vdom.elt "button"
     ~a:[
       Vdom.type_button;
@@ -97,7 +129,7 @@ let button ~revealed ~camel (i, j) =
       s"min-width" "40px";
       Vdom.disabled revealed;
     ]
-    [Vdom.text (if revealed && camel then camel_string else "O")]
+    [Vdom.text txt]
 
 
 let view ({grid; _} as model) =
@@ -105,8 +137,7 @@ let view ({grid; _} as model) =
     Array.mapi (fun i row ->
         Vdom.div (
           Array.mapi (fun j cell ->
-              let revealed = is_revealed model (i, j) in
-              button ~revealed ~camel:(is_camel model (i,j)) (i, j)
+              button model (i, j)
             ) row
           |> Array.to_list
         )
