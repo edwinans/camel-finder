@@ -6,42 +6,79 @@ type cell =
 
 type model = {
   size: int;
+  camels: int;
   grid: cell array array;
-  state: bool array array; (* revealed or not *)
+  revealed: bool array array;
+  generated: bool;
 }
 
 type msg =
   | Clicked of int * int
+  | Calculate of int * int
+  | Generate
   | Game_over
 
 let init =
-  let size = 10 in
+  let size = 8 in
   let grid = Array.init size (fun _ -> Array.make size Empty) in
-  let state = Array.init size (fun _ -> Array.make size false) in
-  grid.(0).(1) <- Camel;
+  let revealed = Array.init size (fun _ -> Array.make size false) in
   Vdom.return
     {
       size;
+      camels = 10;
       grid;
-      state;
+      revealed;
+      generated = false;
     }
 
-let update ({grid; state; _} as model) = function
+
+let print_revealed a =
+  Array.iter (fun row -> Array.iter (fun x -> print_string @@ string_of_bool x ^ " ") row; print_newline ()) a
+
+let print_grid grid =
+  Array.iter (fun row -> Array.iter (fun c -> print_string @@ (if c = Camel then "C" else "E") ^ " ") row; print_newline ()) grid
+
+let print_list = List.iter (fun x -> Printf.printf "%d " x)
+
+let generate grid camels size =
+  let n = size * size in
+  Random.self_init ();
+  let dummy_sort = List.fast_sort (fun _ _ -> -1 + Random.int 3) in
+  let camels_positions =
+    Seq.ints 0 |> Seq.take n |> List.of_seq
+    |> dummy_sort |> dummy_sort
+    |> List.to_seq |> Seq.take camels |> List.of_seq
+  in
+  List.iter (fun pos ->
+      let i = pos / size in
+      let j = pos mod size in
+      grid.(i).(j) <- Camel
+    )
+    camels_positions
+
+let update ({camels; size; grid; revealed; generated;} as model) = function
   | Clicked (i, j) ->
     Printf.printf "(%d, %d)\n" i j;
-    state.(i).(j) <- true;
+    revealed.(i).(j) <- true;
+    if not generated then
+      Vdom.return ~c:[Vdom.Cmd.echo Generate] model
+    else
+      Vdom.return ~c:[Vdom.Cmd.echo (Calculate (i, j))] model
+  | Calculate (i, j) ->
     if grid.(i).(j) = Camel then
       Vdom.return ~c:[Vdom.Cmd.echo Game_over] model
     else
       Vdom.return model
+  | Generate ->
+    print_endline "Generating the grid!";
+    generate grid camels size;
+    print_grid grid;
+    Vdom.return {model with generated = true}
   | Game_over ->
     Js_browser.Window.alert Js_browser.window "Game Over!";
     Vdom.return model
 
-let print_state a =
-  Array.iter (fun row -> Array.iter (fun x -> print_string @@ string_of_bool x ^ " ") row; print_newline ()) a
-
-let is_revealed model (i, j) = model.state.(i).(j)
+let is_revealed model (i, j) = model.revealed.(i).(j)
 
 let button ~revealed (i, j) =
   Vdom.elt "button"
