@@ -1,4 +1,4 @@
-[@@@warning "-A"]
+[@@@warning "-32"]
 
 type cell =
   | Camel
@@ -60,13 +60,13 @@ let generate grid camels size first =
     )
     camels_positions
 
-let rec calculate ({grid; revealed; size} as model) (i, j) =
+let rec calculate ({grid; revealed; size; _} as model) (i, j) =
   if grid.(i).(j) <> Camel then begin
     Printf.printf "calculate (%d, %d)\n" i j;
     revealed.(i).(j) <- true;
     let neighbours =
       List.filter
-        (fun (x, y) -> x >= 0 && x < size && y >= 0 && y < size )
+        (fun (x, y) -> x >= 0 && x < size && y >= 0 && y < size)
         [(i-1, j-1); (i-1, j); (i-1, j+1); (i, j-1); (i, j+1); (i+1, j-1); (i+1, j); (i+1, j+1)]
     in
     let nb_camels =
@@ -137,7 +137,7 @@ let view ({grid; _} as model) =
   let buttons =
     Array.mapi (fun i row ->
         Vdom.div (
-          Array.mapi (fun j cell ->
+          Array.mapi (fun j _cell ->
               button model (i, j)
             ) row
           |> Array.to_list
