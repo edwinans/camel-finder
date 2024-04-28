@@ -60,26 +60,27 @@ let generate grid camels size first =
     )
     camels_positions
 
-let rec calculate grid size (i, j) =
+let rec calculate ({grid; revealed; size} as model) (i, j) =
   if grid.(i).(j) <> Camel then begin
     Printf.printf "calculate (%d, %d)\n" i j;
-    let nb = ref 0 in
-    let nb_camels i j =
-      if i >= 0 && i < size && j >= 0 && j < size && grid.(i).(j) = Camel then
-        incr nb
+    revealed.(i).(j) <- true;
+    let neighbours =
+      List.filter
+        (fun (x, y) -> x >= 0 && x < size && y >= 0 && y < size )
+        [(i-1, j-1); (i-1, j); (i-1, j+1); (i, j-1); (i, j+1); (i+1, j-1); (i+1, j); (i+1, j+1)]
     in
-    nb_camels (i-1) (j-1);
-    nb_camels (i-1) (j);
-    nb_camels (i-1) (j+1);
-    nb_camels (i) (j-1);
-    nb_camels (i) (j+1);
-    nb_camels (i+1) (j-1);
-    nb_camels (i+1) (j);
-    nb_camels (i+1) (j+1);
-    if !nb = 0 then
-      ()
+    let nb_camels =
+      List.fold_left
+        (fun n (x, y) -> n + if grid.(x).(y) = Camel then 1 else 0)
+        0
+        neighbours
+    in
+    if nb_camels = 0 then
+      List.iter
+        (fun (x, y) -> calculate model (x, y))
+        (List.filter (fun (x, y) -> not revealed.(x).(y)) neighbours)
     else
-      grid.(i).(j) <- Empty !nb
+      grid.(i).(j) <- Empty nb_camels
   end
 
 let update ({camels; size; grid; revealed; generated;} as model) = function
@@ -95,7 +96,7 @@ let update ({camels; size; grid; revealed; generated;} as model) = function
     if is_camel model (i, j) then
       Vdom.return ~c:[Vdom.Cmd.echo Game_over] model
     else begin
-      calculate grid size (i, j);
+      calculate model (i, j);
       Vdom.return model
     end
   | Generate (i, j) ->
