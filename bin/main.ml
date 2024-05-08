@@ -46,8 +46,9 @@ let camel_string = "🐪"
 let is_revealed model (i, j) = model.revealed.(i).(j)
 let is_camel model (i, j) = model.grid.(i).(j) = Camel
 
-let generate grid camels size first =
+let generate ~grid ~camels ~size ~first:(i, j) =
   let n = size * size in
+  let first = i * size + j in
   Random.self_init ();
   let dummy_sort = List.fast_sort (fun _ _ -> -1 + Random.int 3) in
   let camels_positions =
@@ -103,7 +104,7 @@ let update ({camels; size; grid; revealed; generated;} as model) = function
     end
   | Generate (i, j) ->
     print_endline "Generating the grid!";
-    generate grid camels size (i * size + j);
+    generate ~grid ~camels ~size ~first:(i, j);
     Utils.print_grid grid;
     Vdom.return {model with generated = true}
   | Game_over ->
