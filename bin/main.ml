@@ -12,6 +12,7 @@ type cell_state =
 type model = {
   size: int;
   camels: int;
+  flagged_camels: int;
   grid: cell array array;
   state: cell_state array array;
   generated: bool;
@@ -23,6 +24,8 @@ type msg =
   | Calculate of int * int
   | Generate of int * int
   | Reveal_all
+  | Check_win
+  | Won
   | Game_over
 
 
@@ -46,7 +49,8 @@ let init =
   Vdom.return
     {
       size;
-      camels = 10;
+      camels = 2;
+      flagged_camels = 0;
       grid;
       state;
       generated = false;
@@ -59,12 +63,15 @@ let is_raw model (i, j) = model.state.(i).(j) = Raw
 let is_revealed model (i, j) = model.state.(i).(j) = Revealed
 let is_camel model (i, j) = model.grid.(i).(j) = Camel
 
-let toggle_cell_flag model (i, j) =
-  model.state.(i).(j) <-
-    match model.state.(i).(j) with
-    | Raw -> Flagged
-    | Flagged -> Raw
-    | Revealed -> Revealed
+let toggle_cell_flag ({state; flagged_camels; _} as model) (i, j) =
+  let st, diff =
+    match state.(i).(j) with
+    | Raw -> Flagged, +1
+    | Flagged -> Raw, -1
+    | Revealed -> Revealed, 0
+  in
+  state.(i).(j) <- st;
+  {model with flagged_camels = flagged_camels + diff}
 
 let project_1d (i, j) size = i * size + j
 let project_2d pos size = (pos / size, pos mod size)
@@ -112,7 +119,7 @@ let rec calculate_expansion ({grid; state; size; _} as model) (i, j) =
       grid.(i).(j) <- Empty nb_camels
   end
 
-let update ({camels; size; grid; state; generated;} as model) = function
+let update ({camels; size; grid; state; generated; _} as model) = function
   | Click (i, j) ->
     Utils.log_cell "click" (i, j);
     state.(i).(j) <- Revealed;
@@ -130,8 +137,8 @@ let update ({camels; size; grid; state; generated;} as model) = function
     end
   | Toggle_flag (i, j) ->
     Utils.log_cell "toggle_flag" (i, j);
-    toggle_cell_flag model (i, j);
-    Vdom.return model
+    let model = toggle_cell_flag model (i, j) in
+    Vdom.return ~c:[Vdom.Cmd.echo Check_win] model
   | Generate (i, j) ->
     print_endline "Generating the grid!";
     generate_grid ~grid ~camels ~size ~first:(i, j);
@@ -140,6 +147,16 @@ let update ({camels; size; grid; state; generated;} as model) = function
   | Reveal_all ->
     let state = Array.map (Array.map (fun _ -> Revealed)) state in
     Vdom.return {model with state}
+  | Check_win ->
+    let c =
+      match model.camels = model.flagged_camels with
+      | true -> Some [Vdom.Cmd.echo Won]
+      | false -> None
+    in
+    Vdom.return ?c model
+  | Won ->
+    Js_browser.Window.alert Js_browser.window "WON 🏜!";
+    Vdom.return model
   | Game_over ->
     Js_browser.Window.alert Js_browser.window "Game Over!";
     Vdom.return ~c:[Vdom.Cmd.echo Reveal_all] model
