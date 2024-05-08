@@ -22,6 +22,7 @@ type msg =
   | Toggle_flag of int * int
   | Calculate of int * int
   | Generate of int * int
+  | Reveal_all
   | Game_over
 
 
@@ -136,9 +137,12 @@ let update ({camels; size; grid; state; generated;} as model) = function
     generate_grid ~grid ~camels ~size ~first:(i, j);
     Utils.print_grid grid;
     Vdom.return {model with generated = true}
+  | Reveal_all ->
+    let state = Array.map (Array.map (fun _ -> Revealed)) state in
+    Vdom.return {model with state}
   | Game_over ->
     Js_browser.Window.alert Js_browser.window "Game Over!";
-    Vdom.return model
+    Vdom.return ~c:[Vdom.Cmd.echo Reveal_all] model
 
 
 let button model (i, j) =
