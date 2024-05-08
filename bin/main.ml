@@ -49,6 +49,11 @@ let is_camel model (i, j) = model.grid.(i).(j) = Camel
 let project_1d (i, j) size = i * size + j
 let project_2d pos size = (pos / size, pos mod size)
 
+let neighbours (i, j) size =
+  List.filter
+    (fun (x, y) -> x >= 0 && x < size && y >= 0 && y < size)
+    [(i-1, j-1); (i-1, j); (i-1, j+1); (i, j-1); (i, j+1); (i+1, j-1); (i+1, j); (i+1, j+1)]
+
 let generate_grid ~grid ~camels ~size ~first =
   let n = size * size in
   let first = project_1d first size in
@@ -69,21 +74,17 @@ let rec calculate_expansion ({grid; revealed; size; _} as model) (i, j) =
   if grid.(i).(j) <> Camel then begin
     Printf.printf "calculate (%d, %d)\n" i j;
     revealed.(i).(j) <- true;
-    let neighbours =
-      List.filter
-        (fun (x, y) -> x >= 0 && x < size && y >= 0 && y < size)
-        [(i-1, j-1); (i-1, j); (i-1, j+1); (i, j-1); (i, j+1); (i+1, j-1); (i+1, j); (i+1, j+1)]
-    in
+    let nbrs = neighbours (i, j) size in
     let nb_camels =
       List.fold_left
         (fun n (x, y) -> n + if grid.(x).(y) = Camel then 1 else 0)
         0
-        neighbours
+        nbrs
     in
     if nb_camels = 0 then
       List.iter
         (fun (x, y) -> calculate_expansion model (x, y))
-        (List.filter (fun (x, y) -> not revealed.(x).(y)) neighbours)
+        (List.filter (fun (x, y) -> not revealed.(x).(y)) nbrs)
     else
       grid.(i).(j) <- Empty nb_camels
   end
