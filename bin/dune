@@ -1,5 +1,4 @@
 (executable
- ; (public_name camel_finder)
  (name main)
  (libraries vdom)
  (modes js))
@@ -7,5 +6,5 @@
 (rule (copy main.bc.js main.js))
 
 (alias
- (name default)
+ (name all)
  (deps main.js index.html))
