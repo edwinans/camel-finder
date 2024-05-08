@@ -52,6 +52,8 @@ let init =
     }
 
 let camel_string = "🐪"
+let cactus_string = "🌵"
+
 let is_raw model (i, j) = model.state.(i).(j) = Raw
 let is_revealed model (i, j) = model.state.(i).(j) = Revealed
 let is_camel model (i, j) = model.grid.(i).(j) = Camel
@@ -141,11 +143,11 @@ let update ({camels; size; grid; state; generated;} as model) = function
 
 let button model (i, j) =
   let s = Vdom.style in
-  let revealed = is_revealed model (i, j) in
   let txt =
-    match model.grid.(i).(j) with
-    | Camel when revealed -> camel_string
-    | Empty nb when revealed -> string_of_int nb
+    match model.grid.(i).(j), model.state.(i).(j) with
+    | Camel, Revealed -> camel_string
+    | Empty nb, Revealed -> string_of_int nb
+    | _, Flagged -> cactus_string
     | _ -> "O"
   in
   Vdom.elt "button"
@@ -158,7 +160,7 @@ let button model (i, j) =
       s"height" "40px";
       s"min-height" "40px";
       s"min-width" "40px";
-      Vdom.disabled revealed;
+      Vdom.disabled (is_revealed model (i, j));
     ]
     [Vdom.text txt]
 
