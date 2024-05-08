@@ -62,7 +62,7 @@ let generate grid camels size first =
     )
     camels_positions
 
-let rec calculate ({grid; revealed; size; _} as model) (i, j) =
+let rec calculate_expansion ({grid; revealed; size; _} as model) (i, j) =
   if grid.(i).(j) <> Camel then begin
     Printf.printf "calculate (%d, %d)\n" i j;
     revealed.(i).(j) <- true;
@@ -79,7 +79,7 @@ let rec calculate ({grid; revealed; size; _} as model) (i, j) =
     in
     if nb_camels = 0 then
       List.iter
-        (fun (x, y) -> calculate model (x, y))
+        (fun (x, y) -> calculate_expansion model (x, y))
         (List.filter (fun (x, y) -> not revealed.(x).(y)) neighbours)
     else
       grid.(i).(j) <- Empty nb_camels
@@ -98,7 +98,7 @@ let update ({camels; size; grid; revealed; generated;} as model) = function
     if is_camel model (i, j) then
       Vdom.return ~c:[Vdom.Cmd.echo Game_over] model
     else begin
-      calculate model (i, j);
+      calculate_expansion model (i, j);
       Vdom.return model
     end
   | Generate (i, j) ->
