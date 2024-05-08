@@ -11,3 +11,8 @@ dune build
 ```
 opam install . --deps-only
 ```
+
+## Easy local run
+```
+./run.sh
+```

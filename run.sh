@@ -2,6 +2,8 @@
 
 index='_build/default/bin/index.html'
 
+dune build
+
 if command -v google-chrome &> /dev/null; then
   google-chrome "$index"
 elif command -v firefox &> /dev/null; then
