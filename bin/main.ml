@@ -22,7 +22,7 @@ type msg =
   | Click of int * int
   | Toggle_flag of int * int
   | Calculate of int * int
-  | Generate of int * int
+  | Generate of {first: int * int}
   | Reveal_all
   | Check_win
   | Won
@@ -125,7 +125,7 @@ let update ({camels; size; grid; state; generated; _} as model) = function
     state.(i).(j) <- Revealed;
     let c = [Vdom.Cmd.echo (Calculate (i, j))] in
     if not generated then
-      Vdom.return ~c:[Vdom.Cmd.batch (Vdom.Cmd.echo (Generate (i, j)) :: c)] model
+      Vdom.return ~c:[Vdom.Cmd.batch (Vdom.Cmd.echo (Generate {first = (i, j)}) :: c)] model
     else
       Vdom.return ~c model
   | Calculate (i, j) ->
@@ -139,9 +139,9 @@ let update ({camels; size; grid; state; generated; _} as model) = function
     Utils.log_cell "toggle_flag" (i, j);
     let model = toggle_cell_flag model (i, j) in
     Vdom.return ~c:[Vdom.Cmd.echo Check_win] model
-  | Generate (i, j) ->
+  | Generate {first} ->
     print_endline "Generating the grid!";
-    generate_grid ~grid ~camels ~size ~first:(i, j);
+    generate_grid ~grid ~camels ~size ~first;
     Utils.print_grid grid;
     Vdom.return {model with generated = true}
   | Reveal_all ->
