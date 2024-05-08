@@ -49,7 +49,7 @@ let init =
   Vdom.return
     {
       size;
-      camels = 2;
+      camels = 8;
       flagged_camels = 0;
       grid;
       state;
@@ -58,6 +58,7 @@ let init =
 
 let camel_string = "🐪"
 let cactus_string = "🌵"
+let invisible_string = "\u{200E}"
 
 let is_raw model (i, j) = model.state.(i).(j) = Raw
 let is_revealed model (i, j) = model.state.(i).(j) = Revealed
@@ -169,7 +170,7 @@ let button model (i, j) =
     | Camel, Revealed -> camel_string
     | Empty nb, Revealed -> string_of_int nb
     | _, Flagged -> cactus_string
-    | _ -> "O"
+    | _ -> invisible_string
   in
   Vdom.elt "button"
     ~a:[
