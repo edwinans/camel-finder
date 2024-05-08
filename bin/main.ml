@@ -18,6 +18,17 @@ type msg =
   | Generate of int * int
   | Game_over
 
+
+module Utils = struct
+  let print_revealed a =
+    Array.iter (fun row -> Array.iter (fun x -> print_string @@ string_of_bool x ^ " ") row; print_newline ()) a
+
+  let print_grid grid =
+    Array.iter (fun row -> Array.iter (fun c -> print_string @@ (if c = Camel then "C" else "E") ^ " ") row; print_newline ()) grid
+
+  let print_list = List.iter (fun x -> Printf.printf "%d " x)
+end
+
 let init =
   let size = 8 in
   let grid = Array.init size (fun _ -> Array.make size (Empty 0)) in
@@ -25,20 +36,11 @@ let init =
   Vdom.return
     {
       size;
-      camels = 10;
+      camels = 8;
       grid;
       revealed;
       generated = false;
     }
-
-
-let print_revealed a =
-  Array.iter (fun row -> Array.iter (fun x -> print_string @@ string_of_bool x ^ " ") row; print_newline ()) a
-
-let print_grid grid =
-  Array.iter (fun row -> Array.iter (fun c -> print_string @@ (if c = Camel then "C" else "E") ^ " ") row; print_newline ()) grid
-
-let print_list = List.iter (fun x -> Printf.printf "%d " x)
 
 let camel_string = "🐪"
 let is_revealed model (i, j) = model.revealed.(i).(j)
@@ -102,7 +104,7 @@ let update ({camels; size; grid; revealed; generated;} as model) = function
   | Generate (i, j) ->
     print_endline "Generating the grid!";
     generate grid camels size (i * size + j);
-    print_grid grid;
+    Utils.print_grid grid;
     Vdom.return {model with generated = true}
   | Game_over ->
     Js_browser.Window.alert Js_browser.window "Game Over!";
