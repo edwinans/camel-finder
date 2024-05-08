@@ -10,11 +10,9 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          # - macos-latest
           - ubuntu-latest
-          # - windows-latest
         ocaml-compiler:
-          - 4.13.x
+          - 5.1.x
 
     runs-on: ${{ matrix.os }}
 
@@ -30,7 +28,7 @@ jobs:
         with:
           ocaml-compiler: ${{ matrix.ocaml-compiler }}
 
-      - run: opam install . --deps-only --with-test
+      - run: opam install . --deps-only
 
       - run: opam exec -- dune build --profile release
 
