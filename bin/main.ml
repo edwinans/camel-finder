@@ -4,16 +4,22 @@ type cell =
   | Camel
   | Empty of int
 
+type cell_state =
+  | Raw
+  | Revealed
+  | Flagged
+
 type model = {
   size: int;
   camels: int;
   grid: cell array array;
-  revealed: bool array array;
+  state: cell_state array array;
   generated: bool;
 }
 
 type msg =
-  | Clicked of int * int
+  | Click of int * int
+  | Toggle_flag of int * int
   | Calculate of int * int
   | Generate of int * int
   | Game_over
@@ -27,24 +33,35 @@ module Utils = struct
     Array.iter (fun row -> Array.iter (fun c -> print_string @@ (if c = Camel then "C" else "E") ^ " ") row; print_newline ()) grid
 
   let print_list = List.iter (fun x -> Printf.printf "%d " x)
+
+  let log_cell f (i, j) =
+    Printf.printf "%s (%d, %d)\n" f i j;
 end
 
 let init =
   let size = 8 in
   let grid = Array.init size (fun _ -> Array.make size (Empty 0)) in
-  let revealed = Array.init size (fun _ -> Array.make size false) in
+  let state = Array.init size (fun _ -> Array.make size Raw) in
   Vdom.return
     {
       size;
       camels = 10;
       grid;
-      revealed;
+      state;
       generated = false;
     }
 
 let camel_string = "🐪"
-let is_revealed model (i, j) = model.revealed.(i).(j)
+let is_raw model (i, j) = model.state.(i).(j) = Raw
+let is_revealed model (i, j) = model.state.(i).(j) = Revealed
 let is_camel model (i, j) = model.grid.(i).(j) = Camel
+
+let toggle_cell_flag model (i, j) =
+  model.state.(i).(j) <-
+    match model.state.(i).(j) with
+    | Raw -> Flagged
+    | Flagged -> Raw
+    | Revealed -> Revealed
 
 let project_1d (i, j) size = i * size + j
 let project_2d pos size = (pos / size, pos mod size)
@@ -73,10 +90,10 @@ let generate_grid ~grid ~camels ~size ~first =
     )
     camels_positions
 
-let rec calculate_expansion ({grid; revealed; size; _} as model) (i, j) =
+let rec calculate_expansion ({grid; state; size; _} as model) (i, j) =
   if grid.(i).(j) <> Camel then begin
-    Printf.printf "calculate (%d, %d)\n" i j;
-    revealed.(i).(j) <- true;
+    Utils.log_cell "calculate_expansion" (i, j);
+    state.(i).(j) <- Revealed;
     let nbrs = neighbours (i, j) size in
     let nb_camels =
       List.fold_left
@@ -86,16 +103,16 @@ let rec calculate_expansion ({grid; revealed; size; _} as model) (i, j) =
     in
     if nb_camels = 0 then
       List.iter
-        (fun (x, y) -> calculate_expansion model (x, y))
-        (List.filter (fun (x, y) -> not revealed.(x).(y)) nbrs)
+        (fun p -> calculate_expansion model p)
+        (List.filter (fun p -> is_raw model p) nbrs)
     else
       grid.(i).(j) <- Empty nb_camels
   end
 
-let update ({camels; size; grid; revealed; generated;} as model) = function
-  | Clicked (i, j) ->
-    Printf.printf "(%d, %d)\n" i j;
-    revealed.(i).(j) <- true;
+let update ({camels; size; grid; state; generated;} as model) = function
+  | Click (i, j) ->
+    Utils.log_cell "click" (i, j);
+    state.(i).(j) <- Revealed;
     let c = [Vdom.Cmd.echo (Calculate (i, j))] in
     if not generated then
       Vdom.return ~c:[Vdom.Cmd.batch (Vdom.Cmd.echo (Generate (i, j)) :: c)] model
@@ -108,6 +125,10 @@ let update ({camels; size; grid; revealed; generated;} as model) = function
       calculate_expansion model (i, j);
       Vdom.return model
     end
+  | Toggle_flag (i, j) ->
+    Utils.log_cell "toggle_flag" (i, j);
+    toggle_cell_flag model (i, j);
+    Vdom.return model
   | Generate (i, j) ->
     print_endline "Generating the grid!";
     generate_grid ~grid ~camels ~size ~first:(i, j);
@@ -131,7 +152,8 @@ let button model (i, j) =
   Vdom.elt "button"
     ~a:[
       Vdom.type_button;
-      Vdom.onclick (fun _ -> Clicked (i, j));
+      Vdom.onclick (fun _ -> Click (i, j));
+      Vdom.oncontextmenu (fun _ -> Toggle_flag (i,j));
       s"margin" "1.5px";
       s"width" "40px";
       s"height" "40px";
