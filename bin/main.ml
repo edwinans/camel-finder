@@ -49,7 +49,7 @@ let is_camel model (i, j) = model.grid.(i).(j) = Camel
 let project_1d (i, j) size = i * size + j
 let project_2d pos size = (pos / size, pos mod size)
 
-let generate ~grid ~camels ~size ~first =
+let generate_grid ~grid ~camels ~size ~first =
   let n = size * size in
   let first = project_1d first size in
   Random.self_init ();
@@ -106,7 +106,7 @@ let update ({camels; size; grid; revealed; generated;} as model) = function
     end
   | Generate (i, j) ->
     print_endline "Generating the grid!";
-    generate ~grid ~camels ~size ~first:(i, j);
+    generate_grid ~grid ~camels ~size ~first:(i, j);
     Utils.print_grid grid;
     Vdom.return {model with generated = true}
   | Game_over ->
