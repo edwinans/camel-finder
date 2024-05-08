@@ -46,9 +46,12 @@ let camel_string = "🐪"
 let is_revealed model (i, j) = model.revealed.(i).(j)
 let is_camel model (i, j) = model.grid.(i).(j) = Camel
 
-let generate ~grid ~camels ~size ~first:(i, j) =
+let project_1d (i, j) size = i * size + j
+let project_2d pos size = (pos / size, pos mod size)
+
+let generate ~grid ~camels ~size ~first =
   let n = size * size in
-  let first = i * size + j in
+  let first = project_1d first size in
   Random.self_init ();
   let dummy_sort = List.fast_sort (fun _ _ -> -1 + Random.int 3) in
   let camels_positions =
@@ -57,8 +60,7 @@ let generate ~grid ~camels ~size ~first:(i, j) =
     |> List.to_seq |> Seq.take camels |> List.of_seq
   in
   List.iter (fun pos ->
-      let i = pos / size in
-      let j = pos mod size in
+      let (i, j) = project_2d pos size in
       grid.(i).(j) <- Camel
     )
     camels_positions
