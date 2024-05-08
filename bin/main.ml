@@ -36,7 +36,7 @@ let init =
   Vdom.return
     {
       size;
-      camels = 8;
+      camels = 10;
       grid;
       revealed;
       generated = false;
@@ -56,12 +56,15 @@ let neighbours (i, j) size =
 
 let generate_grid ~grid ~camels ~size ~first =
   let n = size * size in
-  let first = project_1d first size in
+  let exclusions =
+    List.map (fun p -> project_1d p size) (first :: neighbours first size)
+  in
+  let non_excluded pos = not (List.mem pos exclusions) in
   Random.self_init ();
   let dummy_sort = List.fast_sort (fun _ _ -> -1 + Random.int 3) in
   let camels_positions =
-    Seq.ints 0 |> Seq.take n |> Seq.filter ((<>) first) |> List.of_seq
-    |> dummy_sort |> dummy_sort
+    Seq.ints 0 |> Seq.take n |> Seq.filter non_excluded |> List.of_seq
+    |> dummy_sort |> dummy_sort |> dummy_sort
     |> List.to_seq |> Seq.take camels |> List.of_seq
   in
   List.iter (fun pos ->
