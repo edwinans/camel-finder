@@ -176,7 +176,7 @@ let button model (i, j) =
     ~a:[
       Vdom.type_button;
       Vdom.onclick (fun _ -> Click (i, j));
-      Vdom.oncontextmenu (fun _ -> Toggle_flag (i,j));
+      Vdom.oncontextmenu (fun _ -> Toggle_flag (i, j));
       s"margin" "1.5px";
       s"width" "40px";
       s"height" "40px";
