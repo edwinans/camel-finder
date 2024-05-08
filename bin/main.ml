@@ -27,12 +27,12 @@ type msg =
 
 module Utils = struct
   let print_revealed a =
-    Array.iter (fun row -> Array.iter (fun x -> print_string @@ string_of_bool x ^ " ") row; print_newline ()) a
+    Array.iter (fun row -> Array.iter (fun x -> print_string @@ string_of_bool (x = Revealed) ^ " ") row; print_newline ()) a
 
   let print_grid grid =
     Array.iter (fun row -> Array.iter (fun c -> print_string @@ (if c = Camel then "C" else "E") ^ " ") row; print_newline ()) grid
 
-  let print_list = List.iter (fun x -> Printf.printf "%d " x)
+  let print_ints = List.iter (fun x -> Printf.printf "%d " x)
 
   let log_cell f (i, j) =
     Printf.printf "%s (%d, %d)\n" f i j;
@@ -139,7 +139,6 @@ let update ({camels; size; grid; state; generated;} as model) = function
     Vdom.return model
 
 
-
 let button model (i, j) =
   let s = Vdom.style in
   let revealed = is_revealed model (i, j) in
@@ -162,7 +161,6 @@ let button model (i, j) =
       Vdom.disabled revealed;
     ]
     [Vdom.text txt]
-
 
 let view ({grid; _} as model) =
   let buttons =
