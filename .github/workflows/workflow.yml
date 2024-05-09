@@ -34,10 +34,6 @@ jobs:
 
       - run: opam exec -- dune runtest
 
-      # Build and deploy release build with --no-inline to /no-inline
-      - run: |
-          dune build
-
       - name: Deploy website
         uses: peaceiris/actions-gh-pages@v3
         if: ${{ github.ref == 'refs/heads/main' }}
