@@ -49,7 +49,7 @@ let init =
   Vdom.return
     {
       size;
-      camels = 8;
+      camels = 10;
       flagged_camels = 0;
       grid;
       state;
