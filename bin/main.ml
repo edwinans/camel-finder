@@ -1,3 +1,5 @@
+(* MIT License                     *)
+(* Copyright (c) 2024 Edwin Ansari *)
 
 type cell =
   | Camel
@@ -29,9 +31,9 @@ type msg =
   | Toggle_flag of int * int
   | Calculate of int * int
   | Generate of {first: int * int}
+  | Change_level of level
   | Reveal_all
   | Check_win
-  | Change_level of level
   | Won
   | Game_over
 
