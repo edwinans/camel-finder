@@ -1,4 +1,3 @@
-[@@@warning "-32"]
 
 type cell =
   | Camel
@@ -30,6 +29,8 @@ type msg =
 
 
 module Utils = struct
+  [@@@warning "-32"]
+
   let print_revealed a =
     Array.iter (fun row -> Array.iter (fun x -> print_string @@ string_of_bool (x = Revealed) ^ " ") row; print_newline ()) a
 
