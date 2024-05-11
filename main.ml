@@ -187,6 +187,10 @@ let button model (i, j) =
     ]
     [Vdom.text txt]
 
+let status {camels; flagged_camels; _} =
+  Vdom.text
+    (Printf.sprintf "%s / %s = %d / %d\n" cactus_string camel_string flagged_camels camels)
+
 let view ({grid; _} as model) =
   let buttons =
     Array.mapi (fun i row ->
@@ -199,8 +203,10 @@ let view ({grid; _} as model) =
       ) grid
     |> Array.to_list
   in
-  Vdom.div
-    buttons
+  Vdom.div [
+    Vdom.div buttons;
+    Vdom.div [status model];
+  ]
 
 let _ =
   let app = Vdom.app ~init ~update ~view () in
