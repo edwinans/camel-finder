@@ -8,8 +8,6 @@ type cell_state =
   | Revealed
   | Flagged
 
-
-[@@@ warning "-37"]
 type level =
   | Beginner
   | Intermediate
@@ -33,6 +31,7 @@ type msg =
   | Generate of {first: int * int}
   | Reveal_all
   | Check_win
+  | Change_level of level
   | Won
   | Game_over
 
@@ -52,20 +51,25 @@ module Utils = struct
     Printf.printf "%s (%d, %d)\n" f i j;
 end
 
-let init =
-  let size = 8 in
+let config_of_level = function
+  | Beginner -> 8, 10
+  | Intermediate -> 16, 40
+  | Expert -> 25, 99
+
+let init level =
+  let size, camels = config_of_level level in
   let grid = Array.init size (fun _ -> Array.make size (Empty 0)) in
   let state = Array.init size (fun _ -> Array.make size Raw) in
   Vdom.return
     {
       size;
-      camels = 10;
+      camels;
       flagged_camels = 0;
       grid;
       state;
       generated = false;
       finished = false;
-      level = Beginner;
+      level;
     }
 
 let camel_string = "🐪"
@@ -170,6 +174,9 @@ let update ({camels; size; grid; state; generated; _} as model) = function
     generate_grid ~grid ~camels ~size ~first;
     Utils.print_grid grid;
     Vdom.return {model with generated = true}
+  | Change_level level ->
+    print_endline "change_level";
+    init level
   | Reveal_all ->
     let state = Array.map (Array.map (fun _ -> Revealed)) state in
     Vdom.return {model with state}
@@ -221,14 +228,26 @@ let status {camels; flagged_camels; _} =
        (Printf.sprintf "%s / %s = %d / %d" cactus_string camel_string flagged_camels camels)
     ]
 
-let level {level; _} =
+let level_picker {level; _} =
   let levels = ["Beginner"; "Intermediate"; "Expert";] in
-  let _level = List.nth levels
-      (match level with Beginner -> 0 | Intermediate -> 1 | Expert -> 2)
+  let current_level =
+    List.nth levels
+      (match level with | Beginner -> 0 | Intermediate -> 1 | Expert -> 2)
+  in
+  let level_of_string s =
+    assert (List.mem s levels);
+    match s with
+    | "Beginner" -> Beginner
+    | "Intermediate" -> Intermediate
+    | "Expert" -> Expert
+    | _ -> assert false
   in
   let option v = Vdom.elt ~a:[Vdom.value v] "option" [Vdom.text v] in
   Vdom.elt "select"
-    ~a:[]
+    ~a:[
+      Vdom.value current_level;
+      Vdom.onchange (fun s -> Change_level (level_of_string s));
+    ]
     (List.map option levels)
 
 let view ({grid; _} as model) =
@@ -246,11 +265,11 @@ let view ({grid; _} as model) =
   Vdom.div [
     Vdom.div buttons;
     status model;
-    level model;
+    level_picker model;
   ]
 
 
 let _ =
-  let app = Vdom.app ~init ~update ~view () in
+  let app = Vdom.app ~init:(init Beginner) ~update ~view () in
   let container = Js_browser.Document.body Js_browser.document in
   Vdom_blit.dom (Vdom_blit.run ~container app)
