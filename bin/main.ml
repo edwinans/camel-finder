@@ -164,8 +164,9 @@ let update ({camels; size; grid; state; generated; _} as model) = function
     Vdom.return ~c:[Vdom.Cmd.echo Reveal_all] model
 
 
+let s = Vdom.style
+
 let button model (i, j) =
-  let s = Vdom.style in
   let txt =
     match model.grid.(i).(j), model.state.(i).(j) with
     | Camel, Revealed -> camel_string
@@ -188,8 +189,13 @@ let button model (i, j) =
     [Vdom.text txt]
 
 let status {camels; flagged_camels; _} =
-  Vdom.text
-    (Printf.sprintf "%s / %s = %d / %d\n" cactus_string camel_string flagged_camels camels)
+  Vdom.elt "p"
+    ~a:[
+      s"margin-top" "1%";
+    ]
+    [Vdom.text
+       (Printf.sprintf "%s / %s = %d / %d" cactus_string camel_string flagged_camels camels)
+    ]
 
 let view ({grid; _} as model) =
   let buttons =
@@ -205,8 +211,9 @@ let view ({grid; _} as model) =
   in
   Vdom.div [
     Vdom.div buttons;
-    Vdom.div [status model];
+    status model;
   ]
+
 
 let _ =
   let app = Vdom.app ~init ~update ~view () in
