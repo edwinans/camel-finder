@@ -15,6 +15,7 @@ type model = {
   grid: cell array array;
   state: cell_state array array;
   generated: bool;
+  finished: bool;
 }
 
 type msg =
@@ -55,6 +56,7 @@ let init =
       grid;
       state;
       generated = false;
+      finished = false;
     }
 
 let camel_string = "🐪"
@@ -171,10 +173,10 @@ let update ({camels; size; grid; state; generated; _} as model) = function
     Vdom.return ?c model
   | Won ->
     Js_browser.Window.alert Js_browser.window "WON 🏜!";
-    Vdom.return model
+    Vdom.return {model with finished = true}
   | Game_over ->
     Js_browser.Window.alert Js_browser.window "Game Over!";
-    Vdom.return ~c:[Vdom.Cmd.echo Reveal_all] model
+    Vdom.return ~c:[Vdom.Cmd.echo Reveal_all] {model with finished = true}
 
 
 let s = Vdom.style
@@ -197,7 +199,7 @@ let button model (i, j) =
       s"height" "40px";
       s"min-height" "40px";
       s"min-width" "40px";
-      Vdom.disabled (is_revealed model (i, j));
+      Vdom.disabled (model.finished || is_revealed model (i, j));
     ]
     [Vdom.text txt]
 
