@@ -8,6 +8,13 @@ type cell_state =
   | Revealed
   | Flagged
 
+
+[@@@ warning "-37"]
+type level =
+  | Beginner
+  | Intermediate
+  | Expert
+
 type model = {
   size: int;
   camels: int;
@@ -16,6 +23,7 @@ type model = {
   state: cell_state array array;
   generated: bool;
   finished: bool;
+  level: level;
 }
 
 type msg =
@@ -57,6 +65,7 @@ let init =
       state;
       generated = false;
       finished = false;
+      level = Beginner;
     }
 
 let camel_string = "🐪"
@@ -212,6 +221,16 @@ let status {camels; flagged_camels; _} =
        (Printf.sprintf "%s / %s = %d / %d" cactus_string camel_string flagged_camels camels)
     ]
 
+let level {level; _} =
+  let levels = ["Beginner"; "Intermediate"; "Expert";] in
+  let _level = List.nth levels
+      (match level with Beginner -> 0 | Intermediate -> 1 | Expert -> 2)
+  in
+  let option v = Vdom.elt ~a:[Vdom.value v] "option" [Vdom.text v] in
+  Vdom.elt "select"
+    ~a:[]
+    (List.map option levels)
+
 let view ({grid; _} as model) =
   let buttons =
     Array.mapi (fun i row ->
@@ -227,6 +246,7 @@ let view ({grid; _} as model) =
   Vdom.div [
     Vdom.div buttons;
     status model;
+    level model;
   ]
 
 
