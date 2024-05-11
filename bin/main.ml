@@ -121,6 +121,19 @@ let rec calculate_expansion ({grid; state; size; _} as model) (i, j) =
       grid.(i).(j) <- Empty nb_camels
   end
 
+let check_win {grid; state; camels; flagged_camels; generated; _} =
+  match generated && camels = flagged_camels with
+  | false -> false
+  | true ->
+    Array.mapi (fun i ->
+        Array.mapi (fun j -> function
+            | Camel -> state.(i).(j) = Flagged
+            | Empty _ -> state.(i).(j) <> Flagged
+          )
+      )
+      grid
+    |> Array.for_all (Array.for_all Fun.id)
+
 let update ({camels; size; grid; state; generated; _} as model) = function
   | Click (i, j) ->
     Utils.log_cell "click" (i, j);
@@ -151,7 +164,7 @@ let update ({camels; size; grid; state; generated; _} as model) = function
     Vdom.return {model with state}
   | Check_win ->
     let c =
-      match model.camels = model.flagged_camels with
+      match check_win model with
       | true -> Some [Vdom.Cmd.echo Won]
       | false -> None
     in
