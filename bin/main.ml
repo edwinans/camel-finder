@@ -74,7 +74,7 @@ let init level =
       level;
     }
 
-let camel_string = "🐪"
+let camel_string = "🐫"
 let cactus_string = "🌵"
 let invisible_string = "\u{200E}"
 
