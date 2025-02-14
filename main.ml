@@ -76,7 +76,7 @@ let init level =
 
 let camel_string = "🐫"
 let cactus_string = "🌵"
-let invisible_string = "\u{200E}"
+let invisible_string = ""
 
 let is_raw model (i, j) = model.state.(i).(j) = Raw
 let is_revealed model (i, j) = model.state.(i).(j) = Revealed
@@ -197,7 +197,7 @@ let update ({camels; size; grid; state; generated; _} as model) = function
     Vdom.return ~c:[Vdom.Cmd.echo Reveal_all] {model with finished = true}
 
 
-let s = Vdom.style
+let _s = Vdom.style
 
 let button model (i, j) =
   let txt =
@@ -212,20 +212,20 @@ let button model (i, j) =
       Vdom.type_button;
       Vdom.onclick (fun _ -> Click (i, j));
       Vdom.oncontextmenu (fun _ -> Toggle_flag (i, j));
-      s"margin" "1.5px";
-      s"width" "40px";
-      s"height" "40px";
-      s"min-height" "40px";
-      s"min-width" "40px";
+      (* s"margin" "1.5px"; *)
+      (* s"width" "40px";
+         s"height" "40px"; *)
+      (* s"min-height" "40px";
+         s"min-width" "40px"; *)
       Vdom.disabled (model.finished || is_revealed model (i, j));
     ]
     [Vdom.text txt]
 
 let status {camels; flagged_camels; _} =
   Vdom.elt "p"
-    ~a:[
-      s"margin-top" "1%";
-    ]
+    (* ~a:[
+       s"margin-top" "1%";
+       ] *)
     [Vdom.text
        (Printf.sprintf "%s / %s = %d / %d" cactus_string camel_string flagged_camels camels)
     ]
@@ -255,7 +255,7 @@ let level_picker {level; _} =
 let view ({grid; _} as model) =
   let buttons =
     Array.mapi (fun i row ->
-        Vdom.div (
+        Vdom.div ~a:[Vdom.class_ "row"] (
           Array.mapi (fun j _cell ->
               button model (i, j)
             ) row
@@ -265,7 +265,7 @@ let view ({grid; _} as model) =
     |> Array.to_list
   in
   Vdom.div [
-    Vdom.div buttons;
+    Vdom.div ~a:[Vdom.class_ "grid"] buttons;
     status model;
     level_picker model;
   ]

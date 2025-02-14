@@ -1,5 +1,28 @@
 <!doctype html>
 <html>
+  <head>
+    <meta charset="UTF-8">
+    <style>
+      .grid, .row {
+        display: flex;
+      }
+
+      .grid {
+        flex-direction: column;
+        width: 35%;
+      }
+
+      .row {
+        flex-direction: row;
+      }
+
+      .row > button {
+        flex: 1;
+        aspect-ratio: 1/1;
+        margin: 1.5px;
+      }
+    </style>
+  </head>
   <body>
     <script src="main.js"></script>
   </body>
