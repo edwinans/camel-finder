@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 
-index='_build/default/bin/index.html'
+index='_build/default/index.html'
 
 dune build
 

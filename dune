@@ -1,3 +1,10 @@
-(env
- (dev
-  (flags (:standard))))
+(executable
+ (name main)
+ (libraries vdom)
+ (modes js))
+
+(rule (copy main.bc.js main.js))
+
+(alias
+ (name all)
+ (deps main.js index.html))
